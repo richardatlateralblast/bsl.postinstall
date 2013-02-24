@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# Post install shell script for Solaris and Linux
+# Supports syslog and rsyslog on Solaris and Linux
+# Assumes if config file exists service exists
+
+# Update /etc/shells
+
+VENDOR=""
+
+if [ -f "/etc/shells" ] ; then
+  if [ "`cat /etc/shells | grep '/opt/$VENDOR/bin/bash'`" != "/opt/$VENDOR/bin/bash" ]; then
+    echo "/opt/$VENDOR/bin/bash" >> /etc/shells
+    cp /etc/shells /etc/shells.prebsl
+  fi
+fi
+
+# Update /etc/syslog.conf
+
+if [ -f "/etc/syslog.conf" ] ; then
+  if [ "`cat /etc/syslog.conf | awk '{print $2}' |grep '/var/log/userlog`" != "/var/log/userlog" ]; then
+    echo "user.info\\t/var/log/userlog" >> /etc/syslog.conf
+    # Restart syslog
+    if [ “`uname`” = “SunOS” ]; then
+      if [ "`uname -r |cut -f2 -d ‘.’`" -lt "10" ]; then
+        /etc/init.d/syslog stop ; /etc/init.d/syslog start
+      else
+        svcadm restart svc:/system/system-log:default
+      fi
+    fi
+    if [ “`uname`” = “Linux” ]; then
+      service syslog restart
+    fi
+  fi
+fi
+
+# Update /etc/rsyslog.conf
+
+if [ -f "/etc/rsyslog.conf" ] ; then
+  if [ "`cat /etc/rsyslog.conf | awk '{print $2}' |grep '/var/log/userlog`" != "/var/log/userlog" ]; then
+    echo "user.info\\t/var/log/userlog" >> /etc/rsyslog.conf
+    # Restart rsyslog
+    if [ “`uname`” = “Linux” ]; then
+      service rsyslog restart
+    fi
+    if [ “`uname`” = “SunOS” ]; then
+      svcadm restart rsyslog
+    fi
+  fi
+fi
+
+# Manage /var/log/userlog
+
+if [ “`uname`” = “SunOS” ]; then
+  if [ "`logadm -V |awk '{print $1}' |grep '/var/log/userlog'`" != "/var/log/userlog" ]; then
+    cp /etc/logadm.conf /etc/logadm.conf.prebsl
+    logadm -w /var/log/userlog -C 0 -m 600 -g sys -o root
+  fi
+fi
+
+if [ “`uname`” = “Linux” ]; then
+  echo “/var/log/userlog {“ > /etc/logrotate.d/bsl
+  echo “  missingok” >> /etc/logrotate.d/bsl
+  echo “  monthly” >> /etc/logrotate.d/bsl
+  echo “  create 0600 root root” >> /etc/logrotate.d/bsl
+  echo “}” >> /etc/logrotate.d/bsl
+fi
+

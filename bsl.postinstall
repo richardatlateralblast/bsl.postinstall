@@ -18,7 +18,7 @@ fi
 # Update /etc/syslog.conf
 
 if [ -f "/etc/syslog.conf" ] ; then
-  if [ "`cat /etc/syslog.conf | awk '{print $2}' |grep '/var/log/userlog`" != "/var/log/userlog" ]; then
+  if [ "`cat /etc/syslog.conf | awk '{print $2}' |grep '/var/log/userlog'`" != "/var/log/userlog" ]; then
     echo "user.info\\t/var/log/userlog" >> /etc/syslog.conf
     # Restart syslog
     if [ “`uname`” = “SunOS” ]; then
@@ -37,7 +37,7 @@ fi
 # Update /etc/rsyslog.conf
 
 if [ -f "/etc/rsyslog.conf" ] ; then
-  if [ "`cat /etc/rsyslog.conf | awk '{print $2}' |grep '/var/log/userlog`" != "/var/log/userlog" ]; then
+  if [ "`cat /etc/rsyslog.conf | awk '{print $2}' |grep '/var/log/userlog'`" != "/var/log/userlog" ]; then
     echo "user.info\\t/var/log/userlog" >> /etc/rsyslog.conf
     # Restart rsyslog
     if [ “`uname`” = “Linux” ]; then
